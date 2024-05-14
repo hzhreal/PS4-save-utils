@@ -9,10 +9,16 @@ extern "C" {
 
 int main() {
     sceKernelDebugOutText(0, "HELLOOOOOO FROM KERNEL\n\n\n\n\n");
-    
+
     // initialize cred
     if (init_cred() != 0) {
         sceKernelDebugOutText(0, "Failed to init cred\n");
+        for(;;);
+    }
+
+    // load private libraries
+    if (loadPrivLibs() != 0) {
+        sceKernelDebugOutText(0, "Failed to load priv libs\n");
         for(;;);
     }
 
