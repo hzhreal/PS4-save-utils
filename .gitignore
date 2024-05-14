@@ -1,1 +1,8 @@
 .vscode
+assets
+build
+sce_module
+sce_sys
+eboot.bin
+*.pkg
+pkg.gp4

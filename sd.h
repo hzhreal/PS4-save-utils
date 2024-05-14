@@ -2,12 +2,13 @@
 #define SD_H
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <fcntl.h>
 #include <orbis/libkernel.h>
-#include "utils.h"
+#include "ps4-libjbc/utils.h"
+#include "scall.h"
 
 #define ENC_SEALEDKEY_LEN 0x60
 #define DEC_SEALEDKEY_LEN 0x20
