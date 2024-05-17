@@ -1,4 +1,14 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <orbis/libkernel.h>
+
 #include "sd.h"
+#include "ps4-libjbc/utils.h"
+#include "scall.h"
+#include "dir.h"
 
 int (*sceFsUfsAllocateSaveData)(int fd, uint64_t imageSize, uint64_t imageFlags, int ext);
 int (*sceFsInitCreatePfsSaveDataOpt)(CreatePfsSaveDataOpt *opt);
@@ -114,7 +124,6 @@ int decryptSealedKey(uint8_t enc_key[ENC_SEALEDKEY_LEN], uint8_t dec_key[DEC_SEA
 
 int decryptSealedKeyAtPath(const char *keyPath, uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN]) {
     uint8_t sealedKey[ENC_SEALEDKEY_LEN];
-    ssize_t bytesRead;
     int fd;
 
     if ((fd = sys_open(keyPath, O_RDONLY, 0)) == -1) {
@@ -122,12 +131,12 @@ int decryptSealedKeyAtPath(const char *keyPath, uint8_t decryptedSealedKey[DEC_S
     }
 
     if (read(fd, sealedKey, ENC_SEALEDKEY_LEN) != ENC_SEALEDKEY_LEN) {
-        return -2;
         close(fd);
+        return -2;
     }
     close(fd);
 
-    if (decryptSealedKey(sealedKey, decryptedSealedKey) == -1) {
+    if (decryptSealedKey(sealedKey, decryptedSealedKey) != 0) {
         return -3;
     }
 
@@ -144,8 +153,8 @@ int mountSave(const char *folder, const char *saveName, const char *mountPath) {
 
     memset(&opt, 0, sizeof(MountSaveDataOpt));
 
-    sprintf(volumeKeyPath, "%s/%s.bin", folder, saveName);
-    sprintf(volumePath, "%s/%s", folder, saveName);
+    snprintf(volumeKeyPath, sizeof(volumeKeyPath), "%s/%s.bin", folder, saveName);
+    snprintf(volumePath, sizeof(volumePath), "%s/%s", folder, saveName);
 
     if ((ret = decryptSealedKeyAtPath(volumeKeyPath, decryptedSealedKey)) < 0) {
         return ret;
@@ -163,6 +172,7 @@ int mountSave(const char *folder, const char *saveName, const char *mountPath) {
 
 int umountSave(const char *mountPath, int handle, bool ignoreErrors) {
     UmountSaveDataOpt opt;
+    memset(&opt, 0, sizeof(UmountSaveDataOpt));
     sceFsInitUmountSaveDataOpt(&opt);
     return sceFsUmountSaveData(&opt, mountPath, handle, ignoreErrors);
 }

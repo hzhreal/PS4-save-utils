@@ -1,15 +1,16 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <orbis/libkernel.h>
-#include "ps4-libjbc/jailbreak.h"
-#include "ps4-libjbc/utils.h"
-#include "sd.h"
-#include "scall.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int init_cred();
+int setup_cred();
 int init_devices();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // INIT_H
