@@ -57,18 +57,7 @@ int copyfile(const char *src, const char *dst) {
 int copydir(const char *src, const char *dst) {
     DIR *dir;
     struct dirent *entry = NULL;
-    char basename[SINGLE_MAX_PATH_LEN];
     char new_dst[MAX_PATH_LEN];
-
-    // find folder name
-    char *last_part = strrchr(src, '/');
-    if (last_part) {
-        strcpy(basename, last_part + 1);
-    }
-    else {
-        // '/' not found, copy entire path
-        strcpy(basename, src);
-    }
 
     mkdir(dst, 0777);
 
@@ -96,7 +85,11 @@ int copydir(const char *src, const char *dst) {
                 continue;
             }
             snprintf(new_dst, sizeof(new_dst), "%s/%s", dst, entry->d_name);
-            copydir(path, new_dst);        
+
+            int ret = copydir(path, new_dst);
+            if (ret != 0) {
+                return ret;
+            }       
         }
         // check if file
         else if (entry->d_type == DT_REG) {
@@ -106,12 +99,8 @@ int copydir(const char *src, const char *dst) {
             }
 
             // treat files specially
-            if (strcmp(entry->d_name, "memory.dat") == 0 || strcmp(basename, "sce_sys") == 0) {
-                setuid(0);
-            }
-            else {
-                setuid(1);
-            }
+            setuid(s.st_uid);
+
             snprintf(new_dst, sizeof(new_dst), "%s/%s", dst, entry->d_name);
             if (copyfile(path, new_dst) != 0) {
                 return -2;
