@@ -8,7 +8,7 @@ CONTENT_ID  := IV0000-HZHZ00001_00-SAVEDATATS000000
 LIBS        := -lc -lkernel -lc++
 
 # Additional compile flags.
-EXTRAFLAGS  := -O0 -Wall -Wextra
+EXTRAFLAGS  := -O0 -Wall -Wextra -fstack-protector
 
 # Asset and module directories.
 ASSETS 		:= $(wildcard assets/**/*)
