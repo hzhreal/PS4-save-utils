@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <orbis/libkernel.h>
 
 #include "sd.h"
@@ -140,6 +141,71 @@ int decryptSealedKeyAtPath(const char *keyPath, uint8_t decryptedSealedKey[DEC_S
         return -3;
     }
 
+    return 0;
+}
+
+int createSave(const char *folder, const char *saveName, int blocks) {
+    uint8_t sealedKey[ENC_SEALEDKEY_LEN];
+    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN];
+    uint64_t volumeSize;
+    char volumePath[MAX_PATH_LEN];
+    char volumeKeyPath[MAX_PATH_LEN];
+    int fd;
+    CreatePfsSaveDataOpt opt;
+
+    memset(&opt, 0, sizeof(CreatePfsSaveDataOpt));
+    
+    // generate a key
+    if (generateSealedKey(sealedKey) != 0) {
+        return -1;
+    }
+
+    // decrypt the generated key
+    if (decryptSealedKey(sealedKey, decryptedSealedKey) != 0) {
+        return -2;
+    }
+
+    snprintf(volumePath, sizeof(volumePath), "%s/%s", folder, saveName);
+    snprintf(volumeKeyPath, sizeof(volumeKeyPath), "%s/%s.bin", folder, saveName);
+
+    fd = sys_open(volumeKeyPath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
+    if (fd == -1) {
+        return -3;
+    }
+
+    // write sealed key
+    if (write(fd, sealedKey, sizeof(sealedKey)) != sizeof(sealedKey)) {
+        close(fd);
+        return -4;
+    }
+    close(fd);
+
+    fd = sys_open(volumePath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
+    if (fd == -1) {
+        return -5;
+    }
+
+    volumeSize = blocks << 15;
+
+    if (sceFsUfsAllocateSaveData(fd, volumeSize, 0 << 7, 0) < 0) {
+        close(fd);
+        return -6;
+    }
+    close(fd);
+
+    if (sceFsInitCreatePfsSaveDataOpt(&opt) < 0) {
+        return -7;
+    }
+
+    if (sceFsCreatePfsSaveDataImage(&opt, volumePath, 0, volumeSize, decryptedSealedKey) < 0) {
+        return -8;
+    }
+
+    // finalize
+    fd = sys_open(volumePath, O_RDONLY, 0);
+    fsync(fd);
+    close(fd);
+    
     return 0;
 }
 
