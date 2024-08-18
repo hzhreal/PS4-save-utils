@@ -4,7 +4,7 @@ int __clock_gettime(clockid_t clock_id, struct timespec *tp) {
 }
 #include <orbis/libkernel.h>
 
-#include "sd.h"
+#include "savedata.h"
 #include "init.h"
 #include "dir.h"
 

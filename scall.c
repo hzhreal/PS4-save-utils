@@ -1,7 +1,7 @@
 #include <orbis/libkernel.h>
 
 #include "scall.h"
-#include "sd.h"
+#include "savedata.h"
 
 int sys_open(const char *path, int flags, int mode) {
     int result;

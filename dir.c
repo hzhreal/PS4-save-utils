@@ -57,7 +57,7 @@ int copyfile(const char *src, const char *dst) {
 int copydir(const char *src, const char *dst) {
     DIR *dir;
     struct dirent *entry = NULL;
-    char new_dst[MAX_PATH_LEN];
+    char new_dst[MAX_PATH_LEN] = {0};
 
     mkdir(dst, 0777);
 
@@ -73,7 +73,7 @@ int copydir(const char *src, const char *dst) {
         }
 
         struct stat s;
-        char path[MAX_PATH_LEN];
+        char path[MAX_PATH_LEN] = {0};
 
         memset(&s, 0, sizeof(struct stat));
         snprintf(path, sizeof(path), "%s/%s", src, entry->d_name);

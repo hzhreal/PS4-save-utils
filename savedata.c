@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <orbis/libkernel.h>
 
-#include "sd.h"
+#include "savedata.h"
 #include "ps4-libjbc/utils.h"
 #include "scall.h"
 #include "dir.h"
@@ -21,7 +21,7 @@ int (*sceFsUmountSaveData)(UmountSaveDataOpt *opt, const char *mountPath, int ha
 void (*statfs)();
 
 // must be loaded upon setup
-int loadPrivLibs() {
+int loadPrivLibs(void) {
     const char privDir[] = "/system/priv/lib";
     const char commonDir[] = "/system/common/lib";
     int sys;
@@ -73,12 +73,10 @@ int loadPrivLibs() {
 
 int generateSealedKey(uint8_t data[ENC_SEALEDKEY_LEN]) {
     uint8_t dummy[0x30];
-    uint8_t sealedKey[ENC_SEALEDKEY_LEN];
+    uint8_t sealedKey[ENC_SEALEDKEY_LEN] = {0};
     int fd;
 
     UNUSED(dummy);
-
-    memset(sealedKey, 0, sizeof(sealedKey));
 
     if ((fd = open("/dev/sbl_srv", O_RDWR)) == -1) {
         sceKernelDebugOutText(0, "sbl_srv open fail!\n");
@@ -98,10 +96,8 @@ int generateSealedKey(uint8_t data[ENC_SEALEDKEY_LEN]) {
 
 int decryptSealedKey(uint8_t enc_key[ENC_SEALEDKEY_LEN], uint8_t dec_key[DEC_SEALEDKEY_LEN]) {
     uint8_t dummy[0x10];
-    uint8_t data[ENC_SEALEDKEY_LEN + DEC_SEALEDKEY_LEN];
+    uint8_t data[ENC_SEALEDKEY_LEN + DEC_SEALEDKEY_LEN] = {0};
     int fd;
-
-    memset(data, 0, sizeof(data));
 
     UNUSED(dummy);
 
@@ -145,11 +141,11 @@ int decryptSealedKeyAtPath(const char *keyPath, uint8_t decryptedSealedKey[DEC_S
 }
 
 int createSave(const char *folder, const char *saveName, int blocks) {
-    uint8_t sealedKey[ENC_SEALEDKEY_LEN];
-    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN];
+    uint8_t sealedKey[ENC_SEALEDKEY_LEN] = {0};
+    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN] = {0};
     uint64_t volumeSize;
-    char volumePath[MAX_PATH_LEN];
-    char volumeKeyPath[MAX_PATH_LEN];
+    char volumePath[MAX_PATH_LEN] = {0};
+    char volumeKeyPath[MAX_PATH_LEN] = {0};
     int fd;
     CreatePfsSaveDataOpt opt;
 
@@ -210,11 +206,11 @@ int createSave(const char *folder, const char *saveName, int blocks) {
 }
 
 int mountSave(const char *folder, const char *saveName, const char *mountPath) {
-    char volumeKeyPath[MAX_PATH_LEN];
-    char volumePath[MAX_PATH_LEN];
+    char volumeKeyPath[MAX_PATH_LEN] = {0};
+    char volumePath[MAX_PATH_LEN] = {0};
     char bid[] = "system";
     int ret;
-    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN];
+    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN] = {0};
     MountSaveDataOpt opt;
 
     memset(&opt, 0, sizeof(MountSaveDataOpt));
@@ -249,7 +245,7 @@ uint16_t getMaxKeySet() {
         return maxKeyset;
     }
 
-    uint8_t sampleSealedKey[ENC_SEALEDKEY_LEN];
+    uint8_t sampleSealedKey[ENC_SEALEDKEY_LEN] = {0};
     if (generateSealedKey(sampleSealedKey) != 0) {
         return 0;
     }

@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-int init_cred();
-int setup_cred();
-int init_devices();
+int init_cred(void);
+int setup_cred(void);
+int init_devices(void);
 
 #ifdef __cplusplus
 }
