@@ -3,8 +3,8 @@
 #include <orbis/libkernel.h>
 #include <string.h>
 
-#include "ps4-libjbc/jailbreak.h"
-#include "ps4-libjbc/utils.h"
+#include "../ps4-libjbc/jailbreak.h"
+#include "../ps4-libjbc/utils.h"
 #include "init.h"
 #include "savedata.h"
 #include "defs.h"

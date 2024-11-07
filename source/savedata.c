@@ -7,7 +7,7 @@
 #include <orbis/libkernel.h>
 
 #include "savedata.h"
-#include "ps4-libjbc/utils.h"
+#include "../ps4-libjbc/utils.h"
 #include "defs.h"
 
 int (*sceFsUfsAllocateSaveData)(int fd, uint64_t imageSize, uint64_t imageFlags, int ext);
