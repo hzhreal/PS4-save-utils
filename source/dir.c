@@ -15,7 +15,7 @@ int copyfile(const char *src, const char *dst) {
     int fd_src = -1;
     int fd_dst = -1;
     int ret = 0;
-    uint8_t buf[0x10000]; // 64KB chunk size
+    uint8_t buf[0x10000] = {0}; // 64KB chunk size
     ssize_t bytesRead, bytesWritten;
 
     // open source file
