@@ -8,8 +8,7 @@
 
 #include "savedata.h"
 #include "ps4-libjbc/utils.h"
-#include "scall.h"
-#include "dir.h"
+#include "defs.h"
 
 int (*sceFsUfsAllocateSaveData)(int fd, uint64_t imageSize, uint64_t imageFlags, int ext);
 int (*sceFsInitCreatePfsSaveDataOpt)(CreatePfsSaveDataOpt *opt);
@@ -18,7 +17,7 @@ int (*sceFsInitMountSaveDataOpt)(MountSaveDataOpt *opt);
 int (*sceFsMountSaveData)(MountSaveDataOpt *opt, const char *volumePath, const char *mountPath, uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN]);
 int (*sceFsInitUmountSaveDataOpt)(UmountSaveDataOpt *opt);
 int (*sceFsUmountSaveData)(UmountSaveDataOpt *opt, const char *mountPath, int handle, bool ignoreErrors);
-void (*statfs)();
+void (*statfs)(void);
 
 // must be loaded upon setup
 int loadPrivLibs(void) {
@@ -28,13 +27,13 @@ int loadPrivLibs(void) {
     int kernel_sys;
 
     if (jbc_mount_in_sandbox(privDir, "priv") != 0) {
-        sceKernelDebugOutText(0, "Failed to mount system/priv/lib directory\n");
+        LOG("Failed to mount system/priv/lib directory\n");
         return -1;
     }
 
     sys = sceKernelLoadStartModule("/priv/libSceFsInternalForVsh.sprx", 0, NULL, 0, NULL, NULL);
     if (jbc_unmount_in_sandbox("priv") != 0) {
-        sceKernelDebugOutText(0, "Failed to unmount priv\n");
+        LOG("Failed to unmount priv\n");
     }
 
     if (sys >= 0) {
@@ -47,24 +46,25 @@ int loadPrivLibs(void) {
         sceKernelDlsym(sys, "sceFsUmountSaveData",              (void **)&sceFsUmountSaveData);
     }
     else {
-        sceKernelDebugOutText(0, "Failed to load libSceFsInternalForVsh.sprx\n");
+        LOG("Failed to load libSceFsInternalForVsh.sprx\n");
         return -2;
     }
 
     if (jbc_mount_in_sandbox(commonDir, "common") != 0) {
-        sceKernelDebugOutText(0, "Failed to mount /system/common/lib directory\n");
+        LOG("Failed to mount /system/common/lib directory\n");
         return -3;
     }
+
     kernel_sys = sceKernelLoadStartModule("/common/libkernel_sys.sprx", 0, NULL, 0, NULL, NULL);
     if (jbc_unmount_in_sandbox("common") != 0) {
-        sceKernelDebugOutText(0, "Failed to unmount common\n");
+        LOG("Failed to unmount common\n");
     }
 
     if (kernel_sys >= 0) {
         sceKernelDlsym(kernel_sys, "statfs", (void **)&statfs);
     }
     else {
-        sceKernelDebugOutText(0, "Failed to load libkernel_sys.sprx\n");
+        LOG("Failed to load libkernel_sys.sprx\n");
         return -4;
     }
 
@@ -79,7 +79,7 @@ int generateSealedKey(uint8_t data[ENC_SEALEDKEY_LEN]) {
     UNUSED(dummy);
 
     if ((fd = open("/dev/sbl_srv", O_RDWR)) == -1) {
-        sceKernelDebugOutText(0, "sbl_srv open fail!\n");
+        LOG("sbl_srv open fail!\n");
         return -1;
     }
 
@@ -102,13 +102,13 @@ int decryptSealedKey(uint8_t enc_key[ENC_SEALEDKEY_LEN], uint8_t dec_key[DEC_SEA
     UNUSED(dummy);
 
     if ((fd = open("/dev/sbl_srv", O_RDWR)) == -1) {
-        sceKernelDebugOutText(0, "sbl_srv open fail!\n");
+        LOG("sbl_srv open fail!\n");
         return -1;
     }
 
     memcpy(data, enc_key, ENC_SEALEDKEY_LEN);
 
-    if (ioctl(fd, 0xc0845302, data) == -1) {
+    if (ioctl(fd, 0xC0845302, data) == -1) {
         close(fd);
         return -2;
     }
@@ -116,14 +116,15 @@ int decryptSealedKey(uint8_t enc_key[ENC_SEALEDKEY_LEN], uint8_t dec_key[DEC_SEA
     memcpy(dec_key, &data[ENC_SEALEDKEY_LEN], DEC_SEALEDKEY_LEN);
 
     close(fd);
+
     return 0;
 }
 
 int decryptSealedKeyAtPath(const char *keyPath, uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN]) {
-    uint8_t sealedKey[ENC_SEALEDKEY_LEN];
-    int fd;
+    uint8_t sealedKey[ENC_SEALEDKEY_LEN] = {0};
 
-    if ((fd = sys_open(keyPath, O_RDONLY, 0)) == -1) {
+    int fd = open(keyPath, O_RDONLY);
+    if (fd == -1) {
         return -1;
     }
 
@@ -164,19 +165,19 @@ int createSave(const char *folder, const char *saveName, int blocks) {
     snprintf(volumePath, sizeof(volumePath), "%s/%s", folder, saveName);
     snprintf(volumeKeyPath, sizeof(volumeKeyPath), "%s/%s.bin", folder, saveName);
 
-    fd = sys_open(volumeKeyPath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
+    fd = sceKernelOpen(volumeKeyPath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
     if (fd == -1) {
         return -3;
     }
 
     // write sealed key
-    if (write(fd, sealedKey, sizeof(sealedKey)) != sizeof(sealedKey)) {
+    if (sceKernelWrite(fd, sealedKey, sizeof(sealedKey)) != sizeof(sealedKey)) {
         close(fd);
         return -4;
     }
-    close(fd);
+    sceKernelClose(fd);
 
-    fd = sys_open(volumePath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
+    fd = sceKernelOpen(volumePath, O_CREAT | O_TRUNC | O_WRONLY, 0777);
     if (fd == -1) {
         return -5;
     }
@@ -184,10 +185,10 @@ int createSave(const char *folder, const char *saveName, int blocks) {
     volumeSize = blocks << 15;
 
     if (sceFsUfsAllocateSaveData(fd, volumeSize, 0 << 7, 0) < 0) {
-        close(fd);
+        sceKernelClose(fd);
         return -6;
     }
-    close(fd);
+    sceKernelClose(fd);
 
     if (sceFsInitCreatePfsSaveDataOpt(&opt) < 0) {
         return -7;
@@ -198,9 +199,9 @@ int createSave(const char *folder, const char *saveName, int blocks) {
     }
 
     // finalize
-    fd = sys_open(volumePath, O_RDONLY, 0);
-    fsync(fd);
-    close(fd);
+    fd = sceKernelOpen(volumePath, O_RDONLY, 0);
+    sceKernelFsync(fd);
+    sceKernelClose(fd);
     
     return 0;
 }
@@ -232,6 +233,28 @@ int mountSave(const char *folder, const char *saveName, const char *mountPath) {
     return 0;
 }
 
+int mountAny(const char *volumeKeyPath, const char *volumePath, const char *mountPath) {
+    char bid[] = "system";
+    int ret;
+    uint8_t decryptedSealedKey[DEC_SEALEDKEY_LEN] = {0};
+    MountSaveDataOpt opt;
+
+    memset(&opt, 0, sizeof(MountSaveDataOpt));
+
+    if ((ret = decryptSealedKeyAtPath(volumeKeyPath, decryptedSealedKey)) < 0) {
+        return ret;
+    }
+
+    sceFsInitMountSaveDataOpt(&opt);
+    opt.budgetid = bid;
+
+    if ((ret = sceFsMountSaveData(&opt, volumePath, mountPath, decryptedSealedKey)) < 0) {
+        return ret;
+    }
+
+    return 0;
+}
+
 int umountSave(const char *mountPath, int handle, bool ignoreErrors) {
     UmountSaveDataOpt opt;
     memset(&opt, 0, sizeof(UmountSaveDataOpt));
@@ -240,7 +263,7 @@ int umountSave(const char *mountPath, int handle, bool ignoreErrors) {
 }
 
 uint16_t maxKeyset = 0;
-uint16_t getMaxKeySet() {
+uint16_t getMaxKeySet(void) {
     if (maxKeyset > 0) {
         return maxKeyset;
     }

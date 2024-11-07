@@ -7,10 +7,11 @@
 #include "ps4-libjbc/utils.h"
 #include "init.h"
 #include "savedata.h"
-#include "scall.h"
+#include "defs.h"
+#include "mknod.h"
 
 // cred must be set to invoke mount call, use before anything
-int init_cred() {
+int init_cred(void) {
     struct jbc_cred old_cred;
     struct jbc_cred cred;
 
@@ -37,7 +38,7 @@ int init_cred() {
 }
 
 // can use before mount call after initializing everything
-int setup_cred() {
+int setup_cred(void) {
     struct jbc_cred cred;
     memset(&cred, 0, sizeof(struct jbc_cred));
 
@@ -56,24 +57,24 @@ int setup_cred() {
 }
 
 // create devices, do once after setting cred and loading priv libs
-int init_devices() {
+int init_devices(void) {
     struct stat s;
     memset(&s, 0, sizeof(struct stat));
 
     // mount required devices into sandbox
     if (jbc_mount_in_sandbox("/dev/", "rootdev") != 0) {
-        sceKernelDebugOutText(0, "Failed to mount devices\n");
+        LOG("Failed to mount devices\n");
         return -1;
     }
 
     // create devices
     if (stat("/rootdev/pfsctldev", &s) == -1) {
-        sceKernelDebugOutText(0, "err stat pfsctldev\n");
+        LOG("err stat pfsctldev\n");
         return -2;
     }
     else {
         if (sys_mknod("/dev/pfsctldev", S_IFCHR | 0777, s.st_dev) == -1) {
-            sceKernelDebugOutText(0, "err mknod pfsctldev\n");
+            LOG("err mknod pfsctldev\n");
             return -2;
         }
     }
@@ -81,12 +82,12 @@ int init_devices() {
     memset(&s, 0, sizeof(struct stat));
 
     if (stat("/rootdev/lvdctl", &s) == -1) {
-        sceKernelDebugOutText(0, "err stat lvdctl\n");
+        LOG("err stat lvdctl\n");
         return -3;
     }
     else {
         if (sys_mknod("/dev/lvdctl", S_IFCHR | 0777, s.st_dev) == -1) {
-            sceKernelDebugOutText(0, "err mknod lvdctl\n");
+            LOG("err mknod lvdctl\n");
             return -3;
         }
     }
@@ -94,19 +95,19 @@ int init_devices() {
     memset(&s, 0, sizeof(struct stat));
 
     if (stat("/rootdev/sbl_srv", &s) == -1) {
-        sceKernelDebugOutText(0, "err stat sbl_srv\n");
+        LOG("err stat sbl_srv\n");
         return -4;
     }
     else {
         if (sys_mknod("/dev/sbl_srv", S_IFCHR | 0777, s.st_dev) == -1) {
-            sceKernelDebugOutText(0, "err mknod sbl_srv\n");
+            LOG("err mknod sbl_srv\n");
             return -4;
         }
     }
 
     // now unmount devices
     if (jbc_unmount_in_sandbox("rootdev") != 0) {
-        sceKernelDebugOutText(0, "Failed to unmount rootdev\n");
+        LOG("Failed to unmount rootdev\n");
     }
 
     // get max keyset that can be decrypted

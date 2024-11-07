@@ -22,19 +22,21 @@ PROJDIR     := $(shell basename $(CURDIR))
 COMMONDIR   := $(TOOLCHAIN)/samples/_common
 INTDIR      := build
 DEPDIRS		:= ps4-libjbc
+SDIR		:= source
+IDIR 		:= include
 
 # Define objects to build
-CFILES      := $(wildcard *.c)
-CPPFILES    := $(wildcard *.cpp)
+CFILES      := $(wildcard $(SDIR)/*.c)
+CPPFILES    := $(wildcard $(SDIR)/*.cpp)
 DEP_OBJS    := $(foreach dir,$(DEPDIRS),$(wildcard $(dir)/*.o))
 
 # Define final list of objects to build
-OBJS        := $(patsubst %.c, $(INTDIR)/%.o, $(CFILES)) \
-               $(patsubst %.cpp, $(INTDIR)/%.o, $(CPPFILES)) \
+OBJS        := $(patsubst $(SDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) \
+               $(patsubst $(SDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) \
                $(foreach obj,$(DEP_OBJS),$(INTDIR)/$(notdir $(obj)))
 
 # Define final C/C++ flags
-CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include
+CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include -I$(IDIR)
 CXXFLAGS    := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
 LDFLAGS     := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crt1.o
 
@@ -95,10 +97,10 @@ eboot.bin: $(INTDIR) $(OBJS)
 	--authinfo 0000000000000000000000008003002000FF000000000000000000000000000000000000000000000000004000400040000000000000004002000000000080000040FFFF000000F000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \
 	-sdkver 0x4508101
 
-$(INTDIR)/%.o: %.c
+$(INTDIR)/%.o: $(SDIR)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(INTDIR)/%.o: %.cpp
+$(INTDIR)/%.o: $(SDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -o $@ $<
 
 clean:

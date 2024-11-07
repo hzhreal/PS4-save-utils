@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#define _BSD_SOURCE 1
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,13 +9,13 @@
 #include <stdint.h>
 
 #include "dir.h"
-#include "scall.h"
+#include "defs.h"
 
 int copyfile(const char *src, const char *dst) {
     int fd_src = -1;
     int fd_dst = -1;
     int ret = 0;
-    uint8_t buf[65536]; // 64KB chunk size
+    uint8_t buf[0x10000]; // 64KB chunk size
     ssize_t bytesRead, bytesWritten;
 
     // open source file
