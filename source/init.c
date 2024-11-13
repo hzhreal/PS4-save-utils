@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <orbis/libkernel.h>
 #include <string.h>
 
@@ -7,8 +8,11 @@
 #include "../ps4-libjbc/utils.h"
 #include "init.h"
 #include "savedata.h"
-#include "defs.h"
-#include "mknod.h"
+#include "syscall.h"
+
+static inline int _mknod(const char *path, mode_t mode, dev_t dev) {
+    return (int)_syscall(SYS_mknod, path, mode, dev);
+}
 
 // cred must be set to invoke mount call, use before anything
 int init_cred(void) {
@@ -63,52 +67,37 @@ int init_devices(void) {
 
     // mount required devices into sandbox
     if (jbc_mount_in_sandbox("/dev/", "rootdev") != 0) {
-        LOG("Failed to mount devices\n");
         return -1;
     }
 
     // create devices
     if (stat("/rootdev/pfsctldev", &s) == -1) {
-        LOG("err stat pfsctldev\n");
         return -2;
     }
     else {
-        if (sys_mknod("/dev/pfsctldev", S_IFCHR | 0777, s.st_dev) == -1) {
-            LOG("err mknod pfsctldev\n");
-            return -2;
-        }
+        _mknod("/dev/pfsctldev", S_IFCHR | 0777, s.st_dev);
     }
 
     memset(&s, 0, sizeof(struct stat));
 
     if (stat("/rootdev/lvdctl", &s) == -1) {
-        LOG("err stat lvdctl\n");
         return -3;
     }
     else {
-        if (sys_mknod("/dev/lvdctl", S_IFCHR | 0777, s.st_dev) == -1) {
-            LOG("err mknod lvdctl\n");
-            return -3;
-        }
+        _mknod("/dev/lvdctl", S_IFCHR | 0777, s.st_dev);
     }
 
     memset(&s, 0, sizeof(struct stat));
 
     if (stat("/rootdev/sbl_srv", &s) == -1) {
-        LOG("err stat sbl_srv\n");
         return -4;
     }
     else {
-        if (sys_mknod("/dev/sbl_srv", S_IFCHR | 0777, s.st_dev) == -1) {
-            LOG("err mknod sbl_srv\n");
-            return -4;
-        }
+        _mknod("/dev/sbl_srv", S_IFCHR | 0777, s.st_dev);
     }
 
     // now unmount devices
-    if (jbc_unmount_in_sandbox("rootdev") != 0) {
-        LOG("Failed to unmount rootdev\n");
-    }
+    jbc_unmount_in_sandbox("rootdev");
 
     // get max keyset that can be decrypted
     getMaxKeySet();

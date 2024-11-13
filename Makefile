@@ -72,10 +72,13 @@ $(CONTENT_ID).pkg: pkg.gp4
 
 prepare:
 	mkdir -p sce_sys sce_sys/about
+	mkdir -p sce_module
 	cp -p $(TOOLCHAIN)/samples/hello_world/sce_sys/about/right.sprx sce_sys/about/right.sprx
 	cp -p $(TOOLCHAIN)/samples/hello_world/sce_sys/icon0.png sce_sys/icon0.png
+	cp -p $(TOOLCHAIN)/samples/hello_world/sce_module/libc.prx sce_module
+	cp -p $(TOOLCHAIN)/samples/hello_world/sce_module/libSceFios2.prx sce_module
 
-pkg.gp4: eboot.bin sce_sys/about/right.sprx sce_sys/param.sfo sce_sys/icon0.png $(LIBMODULES) $(ASSETS)
+pkg.gp4: eboot.bin sce_sys/about/right.sprx sce_sys/param.sfo sce_sys/icon0.png sce_module/libSceFios2.prx sce_module/libc.prx $(LIBMODULES) $(ASSETS)
 	$(TOOLCHAIN)/bin/$(CDIR)/create-gp4 -out $@ --content-id=$(CONTENT_ID) --files "$^"
 
 sce_sys/param.sfo: Makefile
@@ -104,6 +107,6 @@ $(INTDIR)/%.o: $(SDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	rm -f $(CONTENT_ID).pkg pkg.gp4 sce_sys/param.sfo sce_sys/about/right.sprx sce_sys/icon0.png eboot.bin \
+	rm -f $(CONTENT_ID).pkg pkg.gp4 sce_sys/param.sfo sce_sys/about/right.sprx sce_sys/icon0.png sce_module/libc.prx sce_module/libSceFios2.prx eboot.bin \
 		$(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR).oelf $(OBJS)
-	rmdir --ignore-fail-on-non-empty $(INTDIR) sce_sys/about sce_sys
+	rmdir --ignore-fail-on-non-empty $(INTDIR) sce_sys/about sce_sys sce_module

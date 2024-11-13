@@ -27,14 +27,11 @@ int loadPrivLibs(void) {
     int kernel_sys;
 
     if (jbc_mount_in_sandbox(privDir, "priv") != 0) {
-        LOG("Failed to mount system/priv/lib directory\n");
         return -1;
     }
 
     sys = sceKernelLoadStartModule("/priv/libSceFsInternalForVsh.sprx", 0, NULL, 0, NULL, NULL);
-    if (jbc_unmount_in_sandbox("priv") != 0) {
-        LOG("Failed to unmount priv\n");
-    }
+    jbc_unmount_in_sandbox("priv");
 
     if (sys >= 0) {
         sceKernelDlsym(sys, "sceFsInitCreatePfsSaveDataOpt",    (void **)&sceFsInitCreatePfsSaveDataOpt);
@@ -46,25 +43,20 @@ int loadPrivLibs(void) {
         sceKernelDlsym(sys, "sceFsUmountSaveData",              (void **)&sceFsUmountSaveData);
     }
     else {
-        LOG("Failed to load libSceFsInternalForVsh.sprx\n");
         return -2;
     }
 
     if (jbc_mount_in_sandbox(commonDir, "common") != 0) {
-        LOG("Failed to mount /system/common/lib directory\n");
         return -3;
     }
 
     kernel_sys = sceKernelLoadStartModule("/common/libkernel_sys.sprx", 0, NULL, 0, NULL, NULL);
-    if (jbc_unmount_in_sandbox("common") != 0) {
-        LOG("Failed to unmount common\n");
-    }
+    jbc_unmount_in_sandbox("common");
 
     if (kernel_sys >= 0) {
         sceKernelDlsym(kernel_sys, "statfs", (void **)&statfs);
     }
     else {
-        LOG("Failed to load libkernel_sys.sprx\n");
         return -4;
     }
 
@@ -79,7 +71,6 @@ int generateSealedKey(uint8_t data[ENC_SEALEDKEY_LEN]) {
     UNUSED(dummy);
 
     if ((fd = open("/dev/sbl_srv", O_RDWR)) == -1) {
-        LOG("sbl_srv open fail!\n");
         return -1;
     }
 
@@ -102,7 +93,6 @@ int decryptSealedKey(uint8_t enc_key[ENC_SEALEDKEY_LEN], uint8_t dec_key[DEC_SEA
     UNUSED(dummy);
 
     if ((fd = open("/dev/sbl_srv", O_RDWR)) == -1) {
-        LOG("sbl_srv open fail!\n");
         return -1;
     }
 
