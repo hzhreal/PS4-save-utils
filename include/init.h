@@ -5,9 +5,15 @@
 extern "C" {
 #endif
 
-int init_cred(void);
-int setup_cred(void);
-int init_devices(void);
+#include <stdbool.h>
+
+int initCred(void);
+int setupCred(void);
+int initDevices(void);
+int initAll(void);
+
+int resolveStatfs(void);
+bool checkStatfs(void);
 
 #ifdef __cplusplus
 }

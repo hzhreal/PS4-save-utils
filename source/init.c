@@ -7,15 +7,20 @@
 #include "../ps4-libjbc/jailbreak.h"
 #include "../ps4-libjbc/utils.h"
 #include "init.h"
-#include "savedata.h"
 #include "syscall.h"
+#include "savedata.h"
+#include "trophy.h"
+#include "pkg.h"
+#include "defs.h"
+
+void (*statfs)(void);
 
 static inline int _mknod(const char *path, mode_t mode, dev_t dev) {
     return (int)_syscall(SYS_mknod, path, mode, dev);
 }
 
 // cred must be set to invoke mount call, use before anything
-int init_cred(void) {
+int initCred(void) {
     struct jbc_cred old_cred;
     struct jbc_cred cred;
 
@@ -42,7 +47,7 @@ int init_cred(void) {
 }
 
 // can use before mount call after initializing everything
-int setup_cred(void) {
+int setupCred(void) {
     struct jbc_cred cred;
     memset(&cred, 0, sizeof(struct jbc_cred));
 
@@ -61,7 +66,7 @@ int setup_cred(void) {
 }
 
 // create devices, do once after setting cred and loading priv libs
-int init_devices(void) {
+int initDevices(void) {
     struct stat s;
     memset(&s, 0, sizeof(struct stat));
 
@@ -103,4 +108,47 @@ int init_devices(void) {
     getMaxKeySet();
 
     return 0;
+}
+
+int initAll(void) {
+    if (initCred() != 0) {
+        return -1;
+    }
+    if (initDevices() != 0) {
+        return -2;
+    }
+    if (loadSaveDataLib() != 0) {
+        return -3;
+    }
+    if (loadTrophyLib() != 0) {
+        return -4;
+    }
+    if (loadPkgLib() != 0) {
+        return -5;
+    }
+    return 0;
+}
+
+int resolveStatfs(void) {
+    int handle;
+
+    if (jbc_mount_in_sandbox(COMMONDIR, "common") != 0) {
+        return -1;
+    }
+    LOADMODULE(handle, "/common/libkernel_sys.sprx");
+    jbc_unmount_in_sandbox("common");
+
+    if (handle < 0) {
+        return -2;
+    }
+    RESOLVESYM(handle, "statfs", statfs);
+
+    return 0;
+}
+
+bool checkStatfs(void) {
+    if (statfs == NULL) {
+        return false;
+    }
+    return true;
 }

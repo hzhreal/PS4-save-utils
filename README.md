@@ -1,9 +1,10 @@
-# PS4-save-utils
-Firmware agnostic functions to mount/unmount ps4 savedata.
+# PS4-vsh-utils
+Firmware agnostic wrappers to mount/unmount/create ps4 save-, trophy files.
 
-C implementation of functions from https://github.com/Team-Alua/cecie.nim/blob/main/src/savedata.nim, https://github.com/Team-Alua/cecie.nim/blob/main/src/syscalls.nim, https://github.com/Team-Alua/cecie.nim/blob/main/src/main.nim & https://github.com/OpenOrbis-Nim/orbis.nim/blob/main/dist/orbis/savedata_advanced.nim
-
-Can for example be compiled using https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain
+Can for example be compiled using [OpenOrbis](https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain)
 
 ## Dependencies
-- https://github.com/sleirsgoevy/ps4-libjbc
+- [ps4-libjbc](https://github.com/sleirsgoevy/ps4-libjbc)
+
+## Credits
+- [cecie.nim](https://github.com/Team-Alua/cecie.nim) (Inventor of this method)
