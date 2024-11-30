@@ -229,7 +229,7 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         targetFolder = strtok(NULL, " ");
         blocks = strtok(NULL, " ");
         if (targetFolder == NULL || blocks == NULL) {
-            snprintf(res, BUF_LEN, "create_save <targetfolder> <savename> <blocks>\n\n");
+            snprintf(res, BUF_LEN, "create_trophy <targetfolder> <blocks>\n\n");
             return;
         }
         removeTrailingWhitespace(blocks);
