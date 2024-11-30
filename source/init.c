@@ -65,7 +65,7 @@ int setupCred(void) {
     return 0;
 }
 
-// create devices, do once after setting cred and loading priv libs
+// create devices, do once after setting cred
 int initDevices(void) {
     struct stat s;
     memset(&s, 0, sizeof(struct stat));
