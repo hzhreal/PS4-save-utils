@@ -41,13 +41,13 @@ static int strToInt(const char *str, int base, int *val) {
     l = strtol(str, &end, base);
 
     if (l > INT_MAX || (errno == ERANGE && l == LONG_MAX)) {
-        return -2;
+        return -1;
     }
     if (l < INT_MIN || (errno == ERANGE && l == LONG_MIN)) {
-        return -3;
+        return -2;
     }
     if (*end != '\0') {
-        return -4;
+        return -3;
     }
 
     *val = (int)l;
