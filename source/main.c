@@ -1,4 +1,5 @@
 #include <orbis/libkernel.h>
+#include <orbis/UserService.h>
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -72,11 +73,11 @@ static void cmdDumpSave(const char *saveFolder, const char *saveName, const char
     mkdir(tempMountPath, 0777);
 
     if (mountSave(saveFolder, saveName, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to mount: %s\n\n", strerror(errno));
+        snprintf(res, BUF_LEN, "Failed to mount: %s\n", strerror(errno));
         return;
     }
     if (copydir(tempMountPath, mountFolder) < 0) {
-        snprintf(res, BUF_LEN, "Failed to copy dir\n\n");
+        snprintf(res, BUF_LEN, "Failed to copy dir\n");
     }
     umountSave(tempMountPath, 0, 0);
     rmdir(tempMountPath);
@@ -91,11 +92,11 @@ static void cmdUpdateSave(const char *saveFolder, const char *saveName, const ch
     mkdir(tempMountPath, 0777);
 
     if (mountSave(saveFolder, saveName, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to mount: %s\n\n", strerror(errno));
+        snprintf(res, BUF_LEN, "Failed to mount: %s\n", strerror(errno));
         return;
     }
     if (copydir(sourceFolder, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to copy dir\n\n");
+        snprintf(res, BUF_LEN, "Failed to copy dir\n");
     }
     umountSave(tempMountPath, 0, 0);
     rmdir(tempMountPath);
@@ -110,11 +111,11 @@ static void cmdDumpTrophy(const char *folder, const char *mountFolder, char res[
     mkdir(tempMountPath, 0777);
 
     if (mountTrophy(folder, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to mount: %s\n\n", strerror(errno));
+        snprintf(res, BUF_LEN, "Failed to mount: %s\n", strerror(errno));
         return;
     }
     if (copydir(tempMountPath, mountFolder) < 0) {
-        snprintf(res, BUF_LEN, "Failed to copy dir\n\n");
+        snprintf(res, BUF_LEN, "Failed to copy dir\n");
     }
     umountTrophy(tempMountPath, 0, 0);
     rmdir(tempMountPath);
@@ -129,11 +130,11 @@ static void cmdUpdateTrophy(const char *folder, const char *sourceFolder, char r
     mkdir(tempMountPath, 0777);
 
     if (mountTrophy(folder, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to mount: %s\n\n", strerror(errno));
+        snprintf(res, BUF_LEN, "Failed to mount: %s\n", strerror(errno));
         return;
     }
     if (copydir(sourceFolder, tempMountPath) < 0) {
-        snprintf(res, BUF_LEN, "Failed to copy dir\n\n");
+        snprintf(res, BUF_LEN, "Failed to copy dir\n");
     }
     umountTrophy(tempMountPath, 0, 0);
     rmdir(tempMountPath);
@@ -142,7 +143,7 @@ static void cmdUpdateTrophy(const char *folder, const char *sourceFolder, char r
 static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
     char *cmd = strtok(buf, " ");
     if (cmd == NULL) {
-        snprintf(res, BUF_LEN, "Failed to parse cmd: %s\n\n", cmd);
+        snprintf(res, BUF_LEN, "Failed to parse cmd: %s\n", cmd);
         return;
     }
     removeTrailingWhitespace(cmd);
@@ -154,7 +155,7 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         saveName = strtok(NULL, " ");
         mountFolder = strtok(NULL, " ");
         if (saveFolder == NULL || saveName == NULL | mountFolder == NULL) {
-            snprintf(res, BUF_LEN, "dump_save <savefolder> <savename> <mountfolder>\n\n");
+            snprintf(res, BUF_LEN, "dump_save <savefolder> <savename> <mountfolder>\n");
             return;
         }
         removeTrailingWhitespace(mountFolder);
@@ -168,7 +169,7 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         saveName = strtok(NULL, " ");
         sourceFolder = strtok(NULL, " ");
         if (saveFolder == NULL || saveName == NULL || sourceFolder == NULL) {
-            snprintf(res, BUF_LEN, "update_save <savefolder> <savename> <sourcefolder>\n\n");
+            snprintf(res, BUF_LEN, "update_save <savefolder> <savename> <sourcefolder>\n");
             return;
         }
         removeTrailingWhitespace(sourceFolder);
@@ -183,17 +184,17 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         saveName = strtok(NULL, " ");
         blocks = strtok(NULL, " ");
         if (targetFolder == NULL || saveName == NULL || blocks == NULL) {
-            snprintf(res, BUF_LEN, "create_save <targetfolder> <savename> <blocks>\n\n");
+            snprintf(res, BUF_LEN, "create_save <targetfolder> <savename> <blocks>\n");
             return;
         }
         removeTrailingWhitespace(blocks);
         if (strToInt(blocks, 10, &saveblocks) < 0) {
-            snprintf(res, BUF_LEN, "Parse error: %s\n\n", blocks);
+            snprintf(res, BUF_LEN, "Parse error: %s\n", blocks);
             return;
         }
 
         if (createSave(targetFolder, saveName, saveblocks) < 0) {
-            snprintf(res, BUF_LEN, "Failed to create: %s\n\n", strerror(errno));
+            snprintf(res, BUF_LEN, "Failed to create: %s\n", strerror(errno));
         }
     }
     else if (strcmp(cmd, "dump_trophy") == 0) {
@@ -202,7 +203,7 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         folder = strtok(NULL, " ");
         mountFolder = strtok(NULL, " ");
         if (folder == NULL || mountFolder == NULL) {
-            snprintf(res, BUF_LEN, "dump_trophy <folder> <mountfolder>\n\n");
+            snprintf(res, BUF_LEN, "dump_trophy <folder> <mountfolder>\n");
             return;
         }
         removeTrailingWhitespace(mountFolder);
@@ -215,7 +216,7 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         folder = strtok(NULL, " ");
         sourceFolder = strtok(NULL, " ");
         if (folder == NULL || sourceFolder == NULL) {
-            snprintf(res, BUF_LEN, "update_trophy <folder> <sourcefolder>\n\n");
+            snprintf(res, BUF_LEN, "update_trophy <folder> <sourcefolder>\n");
             return;
         }
         removeTrailingWhitespace(sourceFolder);
@@ -229,25 +230,36 @@ static void commandHandler(char buf[BUF_LEN], char res[BUF_LEN]) {
         targetFolder = strtok(NULL, " ");
         blocks = strtok(NULL, " ");
         if (targetFolder == NULL || blocks == NULL) {
-            snprintf(res, BUF_LEN, "create_trophy <targetfolder> <blocks>\n\n");
+            snprintf(res, BUF_LEN, "create_trophy <targetfolder> <blocks>\n");
             return;
         }
         removeTrailingWhitespace(blocks);
         if (strToInt(blocks, 10, &trophyblocks) < 0) {
-            snprintf(res, BUF_LEN, "Parse error: %s\n\n", blocks);
+            snprintf(res, BUF_LEN, "Parse error: %s\n", blocks);
             return;
         }
 
         if (createTrophy(targetFolder, trophyblocks) < 0) {
-            snprintf(res, BUF_LEN, "Failed to create: %s\n\n", strerror(errno));
+            snprintf(res, BUF_LEN, "Failed to create: %s\n", strerror(errno));
+        }
+    }
+    else if (strcmp(cmd, "get_users") == 0) {
+        OrbisUserServiceLoginUserIdList uidList;
+        sceUserServiceGetLoginUserIdList(&uidList);
+        char unameList[4][16 + 1] = {0};
+        for (int i = 0; i < 4; i++) {
+            if (uidList.userId[i] != -1) {
+                sceUserServiceGetUserName(uidList.userId[i], unameList[i], sizeof(unameList[0]));
+                snprintf(res + strlen(res), BUF_LEN - strlen(res), "%08" PRIx32 ":%s\n", uidList.userId[i], unameList[i]);
+            }
         }
     }
     else if (strcmp(cmd, "keyset") == 0) {
         uint16_t keyset = getMaxKeySet();
-        snprintf(res, BUF_LEN, "Keyset: %" PRIu16 "\n\n", keyset);
+        snprintf(res, BUF_LEN, "Keyset: %" PRIu16 "\n", keyset);
     }
     else {
-        snprintf(res, BUF_LEN, "Unknown cmd: %s\n\n", cmd);
+        snprintf(res, BUF_LEN, "Unknown cmd: %s\n", cmd);
     }
 }
 
@@ -256,6 +268,8 @@ int main(void) {
         LOG("Failed to init");
         for(;;);
     }
+    OrbisUserServiceInitializeParams params = {.priority = ORBIS_KERNEL_PRIO_FIFO_NORMAL};
+    sceUserServiceInitialize(&params);
     srand(time(NULL));
 
     int sockfd;
@@ -346,11 +360,6 @@ int main(void) {
                     clientSocket[i] = 0;
                     continue;
                 }
-                
-                buf[bytesRead] = '\0';
-                res[bytesRead] = '\0';
-                res[0] = '\n';
-                res[1] = '\n';
                 commandHandler(buf, res);
                 write(sd, res, sizeof(res));
             }

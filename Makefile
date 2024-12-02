@@ -5,7 +5,7 @@ TITLE_ID    := HZHZ00001
 CONTENT_ID  := IV0000-HZHZ00001_00-SAVEDATATS000000
 
 # Libraries linked into the ELF.
-LIBS        := -lc -lkernel -lc++
+LIBS        := -lc -lkernel -lSceUserService -lc++
 
 # Additional compile flags.
 EXTRAFLAGS  := -O0 -Wall -Wextra -fstack-protector
