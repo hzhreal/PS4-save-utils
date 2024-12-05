@@ -28,18 +28,20 @@ IDIR 		:= include
 # Define objects to build
 CFILES      := $(wildcard $(SDIR)/*.c)
 CPPFILES    := $(wildcard $(SDIR)/*.cpp)
+SFILES    	:= $(wildcard $(SDIR)/*.s)
 DEP_OBJS    := $(foreach dir,$(DEPDIRS),$(wildcard $(dir)/*.o))
 
 # Define final list of objects to build
 OBJS        := $(patsubst $(SDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) \
                $(patsubst $(SDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) \
+			   $(patsubst $(SDIR)/%.s, $(INTDIR)/%.o, $(SFILES)) \
                $(foreach obj,$(DEP_OBJS),$(INTDIR)/$(notdir $(obj)))
 
 # Define final C/C++ flags
 CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include -I$(IDIR)
 CXXFLAGS    := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
 LDFLAGS     := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crt1.o
-ASMFLAGS	:= -f elf64
+ASMFLAGS	:= --target=x86_64-pc-freebsd12-elf -c
 
 # Create the intermediate directory incase it doesn't already exist.
 _unused     := $(shell mkdir -p $(INTDIR))
@@ -58,14 +60,12 @@ ifeq ($(UNAME_S),Linux)
 		CCX     := clang++
 		LD      := ld.lld
 		CDIR    := linux
-		ASM		:= nasm
 endif
 ifeq ($(UNAME_S),Darwin)
 		CC      := /usr/local/opt/llvm/bin/clang
 		CCX     := /usr/local/opt/llvm/bin/clang++
 		LD      := /usr/local/opt/llvm/bin/ld.lld
 		CDIR    := macos
-		ASM		:= /usr/local/bin/nasm
 endif
 
 all: prepare $(CONTENT_ID).pkg
@@ -110,7 +110,7 @@ $(INTDIR)/%.o: $(SDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -o $@ $<
 
 $(INTDIR)/%.o: $(SDIR)/%.s
-	$(ASM) $(ASMFLAGS) -o $@ $<
+	$(CC) $(ASMFLAGS) -o $@ $<
 
 clean:
 	rm -f $(CONTENT_ID).pkg pkg.gp4 sce_sys/param.sfo sce_sys/about/right.sprx sce_sys/icon0.png sce_module/libc.prx sce_module/libSceFios2.prx eboot.bin \
