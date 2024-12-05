@@ -13,7 +13,7 @@
 #include "pkg.h"
 #include "defs.h"
 
-void (*statfs)(void);
+void (*statfs)(void) = NULL;
 
 static inline int _mknod(const char *path, mode_t mode, dev_t dev) {
     return (int)_syscall(SYS_mknod, path, mode, dev);
